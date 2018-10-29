@@ -29,3 +29,16 @@ species.ReadSpeciesFile_excel(sp_col='act_sym_fullname', sheetname = 0, header =
 
 **Functions**
 
+ncbi_Search2Acc
+
+ncbi_Species2Acc
+
+ncbi_GetSeqsFromAcc
+
+GetIdFromFasta
+
+ncbi_GetTaxIdFromIDs
+
+ncbi_Species2Taxa
+
+ncbi_GetTaxonomy
