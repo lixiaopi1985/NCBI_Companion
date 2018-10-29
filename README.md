@@ -41,4 +41,4 @@ ncbi_GetTaxIdFromIDs
 
 ncbi_Species2Taxa
 
-ncbi_GetTaxonomy
+ncbi_Id2Taxa
