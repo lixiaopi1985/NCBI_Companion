@@ -8,7 +8,7 @@ Entrez copyright belongs to NCBI entrez teams
 ***
 ## Contents
 
-###class LoadSpecies
+### class LoadSpecies
 
 >This class is to used fetch species name contains in csv file, text file, excel or fasta file.
 
@@ -32,7 +32,7 @@ species.ReadSpeciesFile_excel(sp_col='act_sym_fullname', sheetname = 0, header =
 ```
 
 ***
-###class NCBI_Tools
+### class NCBI_Tools
 > This class implements Biopython Entrez to interact with NCBI/Genbank API to either get accession id, taxonomy id, sequences or taxonomy ranking, or converting them. Some of core functions return a tracker flag that can trace which functions have been called. This order will be used by Sqlite_Dumps class to generate fasta file and mapping file
 
 **Functions**
