@@ -1,10 +1,29 @@
 # NCBI_Companion
+
+version: 1.0.6
+
+installation:
+```python
+pip install NCBI-Companion
+```
+
+load module:
+```python
+from NCBI-Companion import NCBI-Companion
+```
+
 ## Introduction
 
 NCBI_Companion targets to construct databases, generate a fasta file and a taxonomy mappingusing by using Genbank Entrez utilities.
 
+**Current Supported Database: nuccore, nucleotide, genome**
+
+
+**Please also follow NCBI E-utitlites rules**
+[rules](https://www.ncbi.nlm.nih.gov/books/NBK25497/)
+
 Biopython copyright belongs to Biopython teams
-Entrez copyright belongs to NCBI entrez teams
+E-Utitlites copyright belongs to NCBI teams
 ***
 ## Contents
 
