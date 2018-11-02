@@ -56,20 +56,20 @@ species.ReadSpeciesFile_excel(sp_col='act_sym_fullname', sheetname = 0, header =
 
 **Functions**
 
-| Functions | parameters | return | database table name | Tracker Flag |
-|---|---|---|---|---|
-| NCBI_Tools | ncbi_key, ncbi_email, sqlite_db, ncbi_db, idtype | initialize | None | None |
-| Update_API | key, email | updated key and email | None | None |
-| getTracker | None | a tracker list | None | None |
-| ncbi_Species2Genome | species list | accession ID list | Sp2Genome | P9 |
-| ncbi_Search2Acc | search terms, howmany to quire | Search2AccIDs |Tracker | P1 |
-| ncbi_Species2Acc | species list, more terms (optional) | Sp2AccIDs | Tracker | P2 |
-| ncbi_GetSeqsFromAcc | table_name, column_name | Acc2Seq | Tracker | P3 |
-| ncbi_GetTaxIdFromAcc | table_name, column_name | Uid2TaxIDs | Tracker | P4 |
-| ncbi_eAcc2Seq | accession ID | Tracker | Acc2Seq | P5 |
-| ncbi_eAcc2TaxID | accession ID | Tracker | Uid2TaxIDs | P6 |
-| ncbi_Species2Taxa | species list, style, levels_n | Tracker | Sp2Taxa | P7 |
-| ncbi_Id2Taxa | style, levels_n | Tracker | TaxId2Ranking | P8 |
+| Functions | parameters | return | database table name | Tracker Flag | Used For |
+|---|---|---|---|---|---|
+| NCBI_Tools | ncbi_key, ncbi_email, sqlite_db, ncbi_db, idtype | initialize | None | None | Initialize |
+| Update_API | key, email | updated key and email | None | None | update your key and email |
+| getTracker | None | a tracker list | None | None | get all the tracker ID |
+| ncbi_Species2Genome | species list | accession ID list | Sp2Genome | P9 | convert species to accession IDs |
+| ncbi_Search2Acc | search terms, howmany to quire | Tracker |Search2AccIDs | P1 | search term to get accession number |
+| ncbi_Species2Acc | species list, more terms (optional) | Tracker | Sp2AccIDs | P2 | convert species and with extra terms to get accession id |
+| ncbi_GetSeqsFromAcc | table_name, column_name | Tracker | Acc2Seq | P3 | from accession ID to get sequences for each |
+| ncbi_GetTaxIdFromAcc | table_name, column_name | Tracker | Uid2TaxIDs | P4 | from accession ID to get tax ID for each |
+| ncbi_eAcc2Seq | accession ID | Tracker | Acc2Seq | P5 | search accession list to get sequences |
+| ncbi_eAcc2TaxID | accession ID | Tracker | Uid2TaxIDs | P6 | search accesson list to get tax id |
+| ncbi_Species2Taxa | species list, style, levels_n | Tracker | Sp2Taxa | P7 | search species to get taxonomy ranking |
+| ncbi_Id2Taxa | style, levels_n | Tracker | TaxId2Ranking | P8 | from accession and tax id to get taxonomy ranking |
 
 
 **Usage**
