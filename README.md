@@ -4,12 +4,12 @@ version: 1.0.6
 
 installation:
 ```python
-pip install NCBI-Companion
+pip3 install NCBI-Companion --user
 ```
 
 load module:
 ```python
-from NCBI-Companion import NCBI-Companion
+from NCBI_Companion import NCBI_Companion
 ```
 
 ## Introduction
