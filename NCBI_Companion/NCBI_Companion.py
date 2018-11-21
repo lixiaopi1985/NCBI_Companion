@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.6
 # Bio.Entrez Copyright 2008-2014 by Michiel de Hoon. 
 from __future__ import print_function
 
