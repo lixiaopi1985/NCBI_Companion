@@ -312,114 +312,171 @@ class NCBI_Tools:
         return acc_ID
 
 
-def ncbi_Search2Acc(self, terms, howmany = 0):
-    """
-    This function is used search term to get accesion IDs. In situations such as knowning species name or gene name, or no accession id available
+    def ncbi_Search2Acc(self, terms, howmany = 0):
+        """
+        This function is used search term to get accesion IDs. In situations such as knowning species name or gene name, or no accession id available
 
-    howmany: 0 select all
+        howmany: 0 select all
 
-    """
+        """
 
-    # this function use to adjust the code for iter_num
-    def retMax(n):
-        if n >= 100000:
-            return 100000 # maximum for entrez 100,000
+        # this function use to adjust the code for iter_num
+        def retMax(n):
+            if n >= 100000:
+                return 100000 # maximum for entrez 100,000
+            else:
+                return n
+
+
+        Entrez.api_key = self._key
+        Entrez.email = self._email
+
+        print(
+        """
+        #########################################################\n
+        ############ NCBI search database to get Acc ############\n
+        #########################################################\n
+        """)
+
+        # setup database
+        try:
+            conn = sqlite3.connect(self.sqlite_db)
+            cur = conn.cursor()
+        except sqlite3.Error as e:
+            print(e)
+
+        
+
+        cur.execute('''CREATE TABLE IF NOT EXISTS Search2AccIDs ( rowid INT PRIMARY KEY, acc_id TEXT )''')
+        cur.execute('''SELECT acc_id FROM Search2AccIDs''')
+        all_acc = cur.fetchall()
+
+        # flatten the tuple
+        existed = len(all_acc)
+        print("Existed {} in Database\n".format(existed))
+
+        if existed > 0:
+            all_acc_flat = [ i[0] for i in all_acc ]
         else:
-            return n
+            all_acc_flat = []
+
+        total_count = None
+        try:
+            handle = Entrez.esearch(db=self.ncbi_db, term=terms)
+            # get total records
+            record = Entrez.read(handle)
+            total_count = int(record['Count'])
+            print('\nTotal Count Found on the search : {}\n'.format(total_count))
+            handle.close()
+        except:
+            print("\nEntrez Error\n")
 
 
-    Entrez.api_key = self._key
-    Entrez.email = self._email
-
-    print(
-    """
-    #########################################################\n
-    ############ NCBI search database to get Acc ############\n
-    #########################################################\n
-    """)
-
-    # setup database
-    try:
-        conn = sqlite3.connect(self.sqlite_db)
-        cur = conn.cursor()
-    except sqlite3.Error as e:
-        print(e)
-
-    
-
-    cur.execute('''CREATE TABLE IF NOT EXISTS Search2AccIDs ( rowid INT PRIMARY KEY, acc_id TEXT )''')
-    cur.execute('''SELECT acc_id FROM Search2AccIDs''')
-    all_acc = cur.fetchall()
-
-    # flatten the tuple
-    existed = len(all_acc)
-    print("Existed {} in Database\n".format(existed))
-
-    if existed > 0:
-        all_acc_flat = [ i[0] for i in all_acc ]
-    else:
-        all_acc_flat = []
-
-    total_count = None
-    try:
-        handle = Entrez.esearch(db=self.ncbi_db, term=terms)
-        # get total records
-        record = Entrez.read(handle)
-        total_count = int(record['Count'])
-        print('\nTotal Count Found on the search : {}\n'.format(total_count))
-        handle.close()
-    except:
-        print("\nEntrez Error\n")
-
-
-    if total_count == 0:
-        print("No Record Found, Please check search terms.\n")
-        return
-    
-
-
-    # howmany 0: all the terms
-    # howmany > 100000: over 100000
-    # howmany <= 100000: small than 100000
-    
-
-    remain = total_count - existed
-    iter_num = remain
-    n = existed
-    rd = 1
-    count = remain
-    row_n = existed + 1
-
-    if howmany == 0:
+        if total_count == 0:
+            print("No Record Found, Please check search terms.\n")
+            return
         
-        print("\nSelect to retrieve all {} terms that can be found...\n".format(total_count))
-        print("{} remained to fetch\n".format(remain))
 
+
+        # howmany 0: all the terms
+        # howmany > 100000: over 100000
+        # howmany <= 100000: small than 100000
         
-        if remain > 100000:
-            # bulk retrieve
 
-            while iter_num > 0:
+        remain = total_count - existed
+        iter_num = remain
+        n = existed
+        rd = 1
+        count = remain
+        row_n = existed + 1
 
-                retM = retMax(iter_num) # max retrieve is 100,000
+        if howmany == 0:
+            
+            print("\nSelect to retrieve all {} terms that can be found...\n".format(total_count))
+            print("{} remained to fetch\n".format(remain))
 
+            
+            if remain > 100000:
+                # bulk retrieve
+
+                while iter_num > 0:
+
+                    retM = retMax(iter_num) # max retrieve is 100,000
+
+                    try:
+                        handle = Entrez.esearch(db=self.ncbi_db, term=terms, retmax=retM, retstart=n, idtype = self.idtype)
+                    except:
+                        print("\nEntrez Error\n")
+
+                    record = Entrez.read(handle)
+                    handle.close() # close the handle if done
+                    # generator object to save memory
+                    record_generator = ( g for g in record['IdList'])
+                    for i, item in enumerate(record_generator):
+                        print('Saving to Database. Batch No. {}'.format(rd))
+                        print("Remaining {}".format(count))
+                        if item not in all_acc_flat:
+                            print(i, ' ', item, ' ', 'Row Number: ', row_n)
+                            cur.execute('''INSERT OR IGNORE INTO Search2AccIDs (rowid, acc_id) VALUES (?,?)''', (row_n, item))
+                            conn.commit()
+                            count -= 1
+                            row_n += 1
+                        else:
+                            print("<Id exists in the database>\n")
+
+                    iter_num -= retM
+                    n += retM
+                    rd += 1
+
+                    time.sleep(1)
+
+
+            elif remain >= 0 and remain <= 100000:
                 try:
-                    handle = Entrez.esearch(db=self.ncbi_db, term=terms, retmax=retM, retstart=n, idtype = self.idtype)
+                    handle = Entrez.esearch(db=self.ncbi_db, term=terms, retmax=remain, retstart = existed, idtype = self.idtype)
+                    record = Entrez.read(handle)
+                    record_generator = (g for g in record['IdList'])
                 except:
                     print("\nEntrez Error\n")
+                handle.close()
+                
 
-                record = Entrez.read(handle)
-                handle.close() # close the handle if done
-                # generator object to save memory
-                record_generator = ( g for g in record['IdList'])
-                for i, item in enumerate(record_generator):
+                for k, item in enumerate(record_generator):
                     print('Saving to Database. Batch No. {}'.format(rd))
                     print("Remaining {}".format(count))
                     if item not in all_acc_flat:
-                        print(i, ' ', item, ' ', 'Row Number: ', row_n)
-                        cur.execute('''INSERT OR IGNORE INTO Search2AccIDs (rowid, acc_id) VALUES (?,?)''', (row_n, item))
+                        print(k, ' ', item, ' ', 'Row Number: ', row_n)
+                        cur.execute('''INSERT OR IGNORE INTO Search2AccIDs (rowid, acc_id) VALUES (?, ?)''', (row_n, item))
                         conn.commit()
                         count -= 1
+                        row_n += 1
+                    else:
+                        print("<Id exists in the database>\n")
+
+
+
+        elif howmany > 100000 and howmany < total_count:
+
+
+            while iter_num > 0 :
+
+                retM = retMax(iter_num)
+                try:
+                    handle = Entrez.esearch(db=self.ncbi_db, term=terms, retmax=retM, retstart=n, idtype = self.idtype)
+                    record = Entrez.read(handle)
+                    record_generator = ( g for g in record['IdList'] )
+                except:
+                    print("\nEntrez Error\n")
+
+
+                handle.close()
+
+                for j, item in enumerate(record_generator):
+                    print('Saving into database. Batch {}'.format(rd))
+                    if item not in all_acc_flat:
+                        print(j, ' ', item, ' ', 'Row Number: ', row_n)
+                        cur.execute('''INSERT OR IGNORE INTO Search2AccIDs (rowid, acc_id) VALUES (?, ?)''', (row_n, item))
+                        conn.commit()
                         row_n += 1
                     else:
                         print("<Id exists in the database>\n")
@@ -431,99 +488,42 @@ def ncbi_Search2Acc(self, terms, howmany = 0):
                 time.sleep(1)
 
 
-        elif remain >= 0 and remain <= 100000:
+        elif howmany <= 10000 and howmany > 0:
+
             try:
-                handle = Entrez.esearch(db=self.ncbi_db, term=terms, retmax=remain, retstart = existed, idtype = self.idtype)
+                handle = Entrez.esearch(db=self.ncbi_db, term=terms, retmax=howmany, idtype = self.idtype)
                 record = Entrez.read(handle)
-                record_generator = (g for g in record['IdList'])
             except:
                 print("\nEntrez Error\n")
             handle.close()
-            
+            aList = record['IdList']
 
-            for k, item in enumerate(record_generator):
-                print('Saving to Database. Batch No. {}'.format(rd))
-                print("Remaining {}".format(count))
+            for u in range(len(aList)):
+                print(aList[i])
+                item = aList[i]
                 if item not in all_acc_flat:
-                    print(k, ' ', item, ' ', 'Row Number: ', row_n)
-                    cur.execute('''INSERT OR IGNORE INTO Search2AccIDs (rowid, acc_id) VALUES (?, ?)''', (row_n, item))
-                    conn.commit()
-                    count -= 1
-                    row_n += 1
-                else:
-                    print("<Id exists in the database>\n")
-
-
-
-    elif howmany > 100000 and howmany < total_count:
-
-
-        while iter_num > 0 :
-
-            retM = retMax(iter_num)
-            try:
-                handle = Entrez.esearch(db=self.ncbi_db, term=terms, retmax=retM, retstart=n, idtype = self.idtype)
-                record = Entrez.read(handle)
-                record_generator = ( g for g in record['IdList'] )
-            except:
-                print("\nEntrez Error\n")
-
-
-            handle.close()
-
-            for j, item in enumerate(record_generator):
-                print('Saving into database. Batch {}'.format(rd))
-                if item not in all_acc_flat:
-                    print(j, ' ', item, ' ', 'Row Number: ', row_n)
+                    print(u, ' ', item, ' ', 'Row Number: ', row_n)
                     cur.execute('''INSERT OR IGNORE INTO Search2AccIDs (rowid, acc_id) VALUES (?, ?)''', (row_n, item))
                     conn.commit()
                     row_n += 1
                 else:
-                    print("<Id exists in the database>\n")
-
-            iter_num -= retM
-            n += retM
-            rd += 1
-
-            time.sleep(1)
+                    print("<Id exists in the database>\n")             
 
 
-    elif howmany <= 10000 and howmany > 0:
+        print("\n")
+        print("Checking Saved Database\n")
 
-        try:
-            handle = Entrez.esearch(db=self.ncbi_db, term=terms, retmax=howmany, idtype = self.idtype)
-            record = Entrez.read(handle)
-        except:
-            print("\nEntrez Error\n")
-        handle.close()
-        aList = record['IdList']
+        cur.execute('''SELECT acc_id FROM Search2AccIDs''')
+        final_count = len(cur.fetchall())
+        cur.close()
+        conn.close()
+        print("\nTotal {}\tRetrieved {}\n".format(total_count, final_count))
+        if final_count == total_count:
+            print("Completed!")
+        else:
+            print("{} needs to retrieve\n".format(total_count - final_count))
 
-        for u in range(len(aList)):
-            print(aList[i])
-            item = aList[i]
-            if item not in all_acc_flat:
-                print(u, ' ', item, ' ', 'Row Number: ', row_n)
-                cur.execute('''INSERT OR IGNORE INTO Search2AccIDs (rowid, acc_id) VALUES (?, ?)''', (row_n, item))
-                conn.commit()
-                row_n += 1
-            else:
-                print("<Id exists in the database>\n")             
-
-
-    print("\n")
-    print("Checking Saved Database\n")
-
-    cur.execute('''SELECT acc_id FROM Search2AccIDs''')
-    final_count = len(cur.fetchall())
-    cur.close()
-    conn.close()
-    print("\nTotal {}\tRetrieved {}\n".format(total_count, final_count))
-    if final_count == total_count:
-        print("Completed!")
-    else:
-        print("{} needs to retrieve\n".format(total_count - final_count))
-
-    return self.track.append('P1')
+        return self.track.append('P1')
 
 
 ##################################
