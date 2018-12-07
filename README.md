@@ -1,6 +1,6 @@
 # NCBI_Companion
 
-version: 1.0.6
+version: 1.0.7
 
 installation:
 ```python
@@ -79,7 +79,7 @@ Example 1: Known species list and search for its trnL gene
 Tracker Flag: P2---> P3 / P4 ---> P4 / P3 ---> P8 
 
 ```python
-import NCBI_Companion
+from NCBI_Companion import NCBI_Companion
 companion = NCBI_Companion.NCBI_Tools(key, email, 'databasename', 'nuccore', 'acc')
 companion.ncbi_Species2Acc(species_list, 'trnL')
 companion.ncbi_GetSeqsFromAcc('Sp2AccIDs', 'acc_id')
