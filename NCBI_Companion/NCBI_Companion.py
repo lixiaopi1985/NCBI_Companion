@@ -797,16 +797,26 @@ class NCBI_Tools:
 
                         fetch.close()
                         fasta = outs.strip().split('\n')
-                        header = fasta[0]
-                        acc, descript = header.split()[0].replace('>', ''), ' '.join(header.split()[1:])
-                        seqs = ''.join(fasta[1:])
 
-                        print('Saving into database:')
-                        print('{} Acc_ID: {}\n'.format(i+1, acc))
-                        cur.execute('''INSERT INTO Acc2Seq VALUES (?,?,?,?)''', (n, current_id, descript, seqs))
-                        conn.commit()
-                        n += 1
-                        time.sleep(3)
+                        if len(fasta) > 1:
+
+                            header = fasta[0]
+                            acc, descript = header.split()[0].replace('>', ''), ' '.join(header.split()[1:])
+                            seqs = ''.join(fasta[1:])
+
+                            print('Saving into database:')
+                            print('{} Acc_ID: {}\n'.format(i+1, acc))
+                            cur.execute('''INSERT INTO Acc2Seq VALUES (?,?,?,?)''', (n, current_id, descript, seqs))
+                            conn.commit()
+                            n += 1
+                            time.sleep(3)
+
+                        else:
+                            print('Empty sequences')
+                            cur.execute('''INSERT INTO Acc2Seq VALUES (?,?,?,?)''', (n, current_id, "NA", "NA"))
+                            conn.commit()
+                            n += 1
+                            time.sleep(3)
         else:
             print("No Accession ID in the Database. Please Check!")
             return
@@ -1116,7 +1126,7 @@ class NCBI_Tools:
 
     def ncbi_Id2Taxa(self, style='regular', levels_n = 7):
         """
-        Get taxonomy ranking information from taxonomy id.\ suppose you know accession id
+        Get taxonomy ranking information from taxonomy id. suppose you know accession id
         return:
         A Database
         tab separated:
